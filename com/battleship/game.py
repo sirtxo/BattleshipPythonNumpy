@@ -3,23 +3,27 @@ import pygame
 import sys
 import random
 
-PLAYER_SHIP_SYMBOL = "x"
-
-
 class Ship:
     def __init__(self, ship_type=None, size=None, positions=[],  is_sunk=None):
         self.ship_type = ship_type
         self.size = size
         self.positions = positions
         self.is_sunk = is_sunk
+    def __init__(self):
+        self.ship_type = ""
+        self.size = -1
+        self.is_sunk = False
+        self.positions = []
 
     def __str__(self):
         return f"Ship(ship_type={self.ship_type}, size={self.size}, positions={self.positions}, orientation={self.orientation}, is_sunk={self.is_sunk})"
 
 TITLE_OF_GAME = "Battleship"
 START_IMG = 'battleship/img/hundir-la-flota-juego-de-mesa.jpg'
+END_IMG = 'battleship/img/hundido.jpg'
 SYSTEM_WATER_SYMBOL = "+"
 PLAYER_WATER_SYMBOL = "-"
+PLAYER_SHIP_SYMBOL = "x"
 
 BOARD_HEIGHT = 600
 MAX_CELLS = 10
@@ -34,10 +38,10 @@ GREEN = (25, 25, 25)
 player_ships = [Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship()]
 games_ships = []
 #0:name - 1 :: 1:construction_position :: 2:number_of_ships :: 4 default_number_positions :: 5 : position,  :: 6 : orientation
-player_game_status = [["Start"], ["Place_Ship", 4, 1, 4, []], ["Place_Ship", 3, 2, 3, []],
-                      ["Place_Ship", 2, 3, 2, []], ["Place_Ship", 1, 4, 1, []],
-                      ["System_ships", 1, 4],
-                      ["Game"], ["End_Game"]]
+player_game_steps = [["Start"], ["Place_Ship", 4, 1, 4, []], ["Place_Ship", 3, 2, 3, []],
+                     ["Place_Ship", 2, 3, 2, []], ["Place_Ship", 1, 4, 1, []],
+                     ["System_ships", 1, 4],
+                     ["Game"], ["End_Game"]]
 #status = [["Start", 0, 0, 0], ["Place_Ship", 1, 1, 1], ["System_ships", 1, 4], ["Game"], ["End_Game"]]
 game_position = 0
 ship_position = 0
@@ -54,15 +58,18 @@ def wait_message_window_action(game_position, player_table, screen, system_table
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    if player_game_status[game_position][0] == "Start":
+                    if player_game_steps[game_position][0] == "Start":
                         game_position += 1
                         screen.fill(WHITE)
                         show_game_window(player_table, system_table, screen, game_position,ship_position,player_ships)
 
 def do_action_on_window(game_position, screen, text2):
-    if player_game_status[game_position][0] == "Start":
+    if player_game_steps[game_position][0] == "Start" or player_game_steps[game_position][0] == "End_Game":
         pygame.display.set_caption(TITLE_OF_GAME)
-        image1 = pygame.image.load(START_IMG).convert_alpha()
+        if player_game_steps[game_position][0] == "End_Game":
+            image1 = pygame.image.load(END_IMG).convert_alpha()
+        else:
+            image1 = pygame.image.load(START_IMG).convert_alpha()
         image1 = pygame.transform.scale(image1, (BOARD_WIDTH * 2, BOARD_HEIGHT))
         screen.fill(WHITE)
         screen.blit(image1, (0, 0))
@@ -106,12 +113,14 @@ def draw_board(screen, player_table, system_table):
 
 
 def main():
+
+    player_ships = [Ship() for _ in range(14)]
     pygame.init()
     screen = pygame.display.set_mode((BOARD_WIDTH * 2, BOARD_HEIGHT))
     screen.fill(WHITE)
     player_table = np.full((MAX_CELLS, MAX_CELLS), PLAYER_WATER_SYMBOL)
     system_table = np.full((MAX_CELLS, MAX_CELLS), SYSTEM_WATER_SYMBOL)
-    if player_game_status[game_position][0] == "Start":
+    if player_game_steps[game_position][0] == "Start":
         show_message_window("Iniciando juego", screen, player_table, system_table, game_position)
 
 def check_position_on_table(pos, table, tuplo):
@@ -130,31 +139,45 @@ def show_game_window(player_table, system_table, screen, game_position, ship_pos
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                end_game()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     pos = (
                         int(event.pos[1] // (BOARD_HEIGHT / MAX_CELLS)), int(event.pos[0] // (BOARD_WIDTH / MAX_CELLS))
                     )
-                    if player_game_status[game_position][0] == "Place_Ship":
+                    if player_game_steps[game_position][0] == "Place_Ship":
                         game_position,ship_position = place_player_ships(game_position, ship_position, player_table, pos, system_table,player_ships)
 
-                    if player_game_status[game_position][0] == "System_ships":
+                    if player_game_steps[game_position][0] == "System_ships":
                         do_system_ships(game_position, player_table, system_table)
                         game_position = game_position + 1
-                        if player_game_status[game_position][0] == "Game":
+                        if player_game_steps[game_position][0] == "Game":
                             show_game_window(player_table, system_table, screen, game_position, ship_position,player_ships)
-                    if player_game_status[game_position][0] == "Game":
+                    if player_game_steps[game_position][0] == "Game":
                         check_position_on_table(pos, system_table, ("W", "B"))
-                        check_position_on_table(generate_random_position(MAX_CELLS), player_table, ("w", "b"))
+                        if not(check_element(system_table, "0")):
+                            game_position = game_position+1
+                            print("Has ganado")
+                            show_message_window("Has Ganado!", screen, player_table, system_table,game_position)
+                        else:
+                            check_position_on_table(generate_random_position(MAX_CELLS), player_table, ("w", "b"))
+                            if not(check_element(system_table, "0")):
+                                game_position = game_position+1
+                                print("Ha ganado la máquina")
+                                show_message_window("Ha ganado la máquina!", screen, player_table, system_table,game_position)
+                            else:
+                                show_game_window(player_table, system_table, screen, game_position, ship_position,player_ships)
+                                pygame.display.flip()
 
-                        show_game_window(player_table, system_table, screen, game_position, ship_position,player_ships)
-                        pygame.display.flip()
+
+def end_game():
+    pygame.quit()
+    sys.exit()
 
 
 # player_game_status -> 0:name - 1 :: 1:construction_position :: 2:number_of_ships :: 4 default_number_positions :: 5 : position, :: 6 : orientation
-
+def check_element(table, element):
+    return np.any(table == element)
 class PositionException(BaseException):
     pass
 
@@ -173,6 +196,18 @@ def check_position(positions, pos):
         print("not is adjacent")
         raise PositionException("Orientation is bad...")
     return False
+
+
+
+def checkAdjacent(pos, positions):
+    adjacent_found = False
+    for position in positions:
+        if is_adjacent(position, pos):
+            adjacent_found = True
+    if adjacent_found:
+        print("not is adjacent")
+        raise PositionException("Orientation is bad...")
+
 
 # Función auxiliar para verificar si dos posiciones están adyacentes
 def is_adjacent(position1, position2):
@@ -194,10 +229,17 @@ def check_orientation(pos, positions):
 
 def place_player_ships(game_position,ship_position, player_table, pos, system_table,player_ships):
     # Comprueba si hay más posiciones de construcción disponibles para el jugador
-    if player_game_status[game_position][1] >= 0:
+    if player_game_steps[game_position][1] >= 0:
         # Marca la posición del jugador en el tablero
         if player_table[pos] != PLAYER_SHIP_SYMBOL:
             try:
+                positions = np.empty((0, 2))  # Assuming positions are 2D coordinates
+
+                if ship_position - 1 >= 0:
+                    for ship in player_ships[:ship_position]:
+                        ship_positions = np.array(ship.positions)
+                        positions = np.concatenate((positions, ship_positions))
+                    checkAdjacent(pos, positions)
                 if len(player_ships[ship_position].positions) > 1:
                     check_position(player_ships[ship_position].positions, pos)
                 player_table[pos] = PLAYER_SHIP_SYMBOL
@@ -208,16 +250,16 @@ def place_player_ships(game_position,ship_position, player_table, pos, system_ta
                 # Dibuja la ventana del juego actualizada
                 draw_window(game_position, player_table, system_table)
                 # Reduce el número de posiciones de construcción disponibles
-                player_game_status[game_position][1] = player_game_status[game_position][1] - 1
+                player_game_steps[game_position][1] = player_game_steps[game_position][1] - 1
                 # Si se han utilizado todas las posiciones de construcción para este tipo de barco
-                if player_game_status[game_position][1] == 0:
+                if player_game_steps[game_position][1] == 0:
                     # Reduce el número total de barcos para este tipo
-                    player_game_status[game_position][2] = player_game_status[game_position][2] - 1
+                    player_game_steps[game_position][2] = player_game_steps[game_position][2] - 1
                     ship_position = ship_position+1
                     # Si quedan más barcos por colocar
-                    if player_game_status[game_position][2] > 0:
+                    if player_game_steps[game_position][2] > 0:
                         # Restablece las posiciones de construcción para el siguiente barco
-                        player_game_status[game_position][1] = player_game_status[game_position][3]
+                        player_game_steps[game_position][1] = player_game_steps[game_position][3]
                     else:
                         # Mueve el juego al siguiente estado
                         game_position = game_position + 1
