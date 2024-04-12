@@ -1,0 +1,2 @@
+class PositionException(BaseException):
+    pass
