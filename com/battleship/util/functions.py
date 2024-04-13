@@ -1,4 +1,6 @@
+import math
 import time
+from turtle import distance
 
 import pygame
 import sys
@@ -11,7 +13,9 @@ import com.battleship.config.variables as var
 system_ships_steps = [["Place_Ship", 4, 1, 4], ["Place_Ship", 3, 2, 3], ["Place_Ship", 2, 3, 2],
                       ["Place_Ship", 1, 4, 1]]
 
-debugger_enable = False
+debugger_enable = True
+
+
 def show_window(text2, screen, player_table, system_table, game_position, ship_position,
                 player_ships, player_game_steps, systems_ships=None):
     do_action_on_window(game_position, screen, text2, player_game_steps)
@@ -73,7 +77,7 @@ def draw_board(screen, player_table, system_table):
         for j in range(var.MAX_CELLS):
             if debugger_enable:
                 text = font.render(system_table[i, j], True, var.GREEN)
-            elif(system_table[i, j]=="0"):
+            elif (system_table[i, j] == "0"):
                 text = font.render(var.SYSTEM_WATER_SYMBOL, True, var.GREEN)
             else:
                 text = font.render(system_table[i, j], True, var.GREEN)
@@ -185,17 +189,17 @@ def checkAdjacent(pos, positions):
         raise PositionException("Orientation is bad...")
 
 
-def checkAllAdjacent(allPositions, positions):
-    adjacent_found = False
-    for pos in positions:
-        for position in allPositions:
-            if is_adjacent(position, pos):
-                adjacent_found = True
+def check_all_adjacent_and_distance(all_positions, check_positions):
+    adjacent_found_and_distance = False
+    for pos in check_positions:
+        for position in all_positions:
+            if is_adjacent_and_distance(position, pos):
+                adjacent_found_and_distance = True
 
-    return adjacent_found
+    return adjacent_found_and_distance
 
 
-def checkNoAdjacent(pos, positions):
+def check_no_adjacent(pos, positions):
     adjacent_no_found = True
     for position in positions:
         if is_adjacent(position, pos):
@@ -206,10 +210,39 @@ def checkNoAdjacent(pos, positions):
 
 
 # Función auxiliar para verificar si dos posiciones están adyacentes
+# Method to check if two positions are adjacent on a 2D grid
 def is_adjacent(position1, position2):
+    # Extract x and y coordinates of both positions
     x1, y1 = position1
     x2, y2 = position2
+
+    # Check if absolute difference between x and y coordinates is <= 1
+    # and ensure positions are not the same
     return abs(x1 - x2) <= 1 and abs(y1 - y2) <= 1 and (x1 != x2 or y1 != y2)
+
+
+# Method to check if two positions are adjacent and have a minimum distance
+def is_adjacent_and_distance(position1, position2):
+    # Extract x and y coordinates of both positions
+    x1, y1 = position1
+    x2, y2 = position2
+
+    # Check if absolute difference between x and y coordinates is <= 1
+    # and if distance between positions is >= 1
+    return abs(x1 - x2) <= 1 and abs(y1 - y2) <= 1 and distance(position1, position2) >= 1 and abs(
+        x1 - x2) != 0 and abs(y1 - y2) != 0
+
+
+# Method to calculate Euclidean distance between two positions in a 2D grid
+def distance(position1, position2):
+    # Extract x and y coordinates of both positions
+    x1, y1 = position1
+    x2, y2 = position2
+
+    # Calculate square of difference in x coordinates
+    # Calculate square of difference in y coordinates
+    # Sum them up and take square root to get distance
+    return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 
 def check_orientation(pos, positions):
@@ -268,7 +301,7 @@ def check_position_is_correct(player_ships, pos, positions, ship_position):
             positions = np.concatenate((positions, ship_positions))
         checkAdjacent(pos, positions)
     if len(player_ships[ship_position].positions) > 0:
-        checkNoAdjacent(pos, player_ships[ship_position].positions)
+        check_no_adjacent(pos, player_ships[ship_position].positions)
         if len(player_ships[ship_position].positions) > 1:
             check_position(player_ships[ship_position].positions, pos)
 
@@ -280,9 +313,11 @@ def go_to_next_status(game_position, player_table, system_table):
 def do_system_ships(game_position, player_table, system_table, systems_ships):
     cont = 0
     for sublist in system_ships_steps:
-        for i in range(sublist[2]):
+        num_ships = sublist[2]
+        for i in range(num_ships):
+            num_positions = sublist[1]
             positions = []
-            for tuple_sys in generate_ship_positions(10, sublist[1], system_table, systems_ships):
+            for tuple_sys in generate_ship_positions(var.MAX_CELLS, num_positions, system_table, systems_ships):
                 positions.append(tuple_sys)
                 system_table[tuple_sys] = "0"
         systems_ships[cont].positions = positions
@@ -293,33 +328,44 @@ def do_system_ships(game_position, player_table, system_table, systems_ships):
 def generate_ship_positions(board_size, ship_size, system_table, systems_ships):
     valid_position = False
     while not valid_position:
-        # Decide si el barco estará horizontal o vertical
-        horizontal = random.choice([True, False])
-        if horizontal:
-            row = random.randint(0, board_size - 1)
-            col = random.randint(0, board_size - ship_size)
-            positions = [(row, col + i) for i in range(ship_size)]
-        else:
-            row = random.randint(0, board_size - ship_size)
-            col = random.randint(0, board_size - 1)
-            positions = [(row + i, col) for i in range(ship_size)]
+        random_positions = create_random_position(board_size, ship_size)
 
-        positions_systems = np.empty((0, 2))
-        for ship in systems_ships:
-            ship_positions = np.array(ship.positions)
-            if ship_positions.size > 0:
-                ship_positions = np.atleast_2d(ship_positions)  # Asegurarse de que sea una matriz 2D
-                positions_systems = np.concatenate((positions_systems, ship_positions))
+        system_positions = get_all_systems_ships_positions(systems_ships)
 
-        if checkAllAdjacent(positions_systems, np.array(positions)):
+        if check_all_adjacent_and_distance(system_positions, np.array(random_positions)):
             valid_position = False
-        elif not (check_elements(positions,system_table)):
-            return positions
+        elif not (check_elements(random_positions, system_table)):
+            return random_positions
         else:
             valid_position = False
 
 
-def check_valid_position(positions, table,):
+def get_all_systems_ships_positions(systems_ships):
+    system_positions = np.empty((0, 2))
+    for ship in systems_ships:
+        ship_positions = np.array(ship.positions)
+        if ship_positions.size > 0:
+            ship_positions = np.atleast_2d(ship_positions)
+            system_positions = np.concatenate((system_positions, ship_positions))
+    return system_positions
+
+
+def create_random_position(board_size, ship_size):
+    # Decide si el barco estará horizontal o vertical
+    horizontal = random.choice([True, False])
+    if horizontal:
+        row = random.randint(0, board_size - 1)
+        col = random.randint(0, board_size - ship_size)
+        positions = [(row, col + i) for i in range(ship_size)]
+    else:
+        row = random.randint(0, board_size - ship_size)
+        col = random.randint(0, board_size - 1)
+        positions = [(row + i, col) for i in range(ship_size)]
+
+    return positions
+
+
+def check_valid_position(positions, table, ):
     valid_position = True
     for r, c in positions:
         if table[r][c] == '0':
@@ -333,12 +379,14 @@ def check_valid_position(positions, table,):
                 print("Error continue")
     return valid_position
 
+
 def check_elements(positions, table):
     is_element = False
     for pos in positions:
         if table[pos] == '0':
             is_element = True
     return is_element
+
 
 def draw_window(game_position, player_table, system_table):
     screen = pygame.display.set_mode((var.BOARD_WIDTH * 2, var.BOARD_HEIGHT))
