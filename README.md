@@ -46,6 +46,7 @@ Follow the on-screen instructions to play the game. Use the mouse to interact wi
 
 - `main.py`: Entry point of the application.
 - `ship.py`: Defines the Ship class.
+- `game.py`: Defines the Game.
 - `functions.py`: Contains utility functions used throughout the game.
 - `variables.py`: Defines constants used in the game.
 - `requirements.txt`: Lists the Python dependencies for the project.
