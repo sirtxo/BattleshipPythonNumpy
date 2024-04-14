@@ -17,6 +17,46 @@ debugger_enable = True
 
 def show_window(text2, screen, player_table, system_table, game_position, ship_position,
                 player_ships, player_game_steps, systems_ships=None):
+    """
+    Display the game window and handle user interactions.
+
+    This function orchestrates the display of the game window and handles user interactions.
+    It calls two sub-functions to perform specific actions on the window: `do_action_on_window`
+    and `wait_message_window_action`.
+
+    Parameters
+    ----------
+    text2 : str
+        Text to be displayed on the game window.
+    screen : pygame.Surface
+        The game window surface.
+    player_table : list
+        List representing the player's game table.
+    system_table : list
+        List representing the system's game table.
+    game_position : int
+        Current position in the game state.
+    ship_position : int
+        Current position of the ship being placed.
+    player_ships : list
+        List containing information about the player's ships.
+    player_game_steps : list
+        List containing information about the game steps for the player.
+    systems_ships : list, optional
+        List containing information about the system's ships (default is None).
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    This function coordinates the display of the game window and user interactions.
+
+    Examples
+    --------
+    >>> show_window("Player's turn", screen, player_table, system_table, 0, 0, player_ships, game_steps)
+    """
     do_action_on_window(game_position, screen, text2, player_game_steps)
     wait_message_window_action(game_position, player_table, screen, system_table, ship_position, player_ships,
                                player_game_steps, systems_ships)
@@ -24,6 +64,44 @@ def show_window(text2, screen, player_table, system_table, game_position, ship_p
 
 def wait_message_window_action(game_position, player_table, screen, system_table, ship_position, player_ships,
                                player_game_steps, systems_ships):
+    """
+    Wait for user input and handle mouse button clicks.
+
+    This function waits for user input events and specifically handles mouse button clicks.
+    If the left mouse button is clicked during the start game status, it advances the game state
+    and updates the game window accordingly.
+
+    Parameters
+    ----------
+    game_position : int
+        Current position in the game state.
+    player_table : list
+        List representing the player's game table.
+    screen : pygame.Surface
+        The game window surface.
+    system_table : list
+        List representing the system's game table.
+    ship_position : int
+        Current position of the ship being placed.
+    player_ships : list
+        List containing information about the player's ships.
+    player_game_steps : list
+        List containing information about the game steps for the player.
+    systems_ships : list
+        List containing information about the system's ships.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    This function listens for user input events and handles left mouse button clicks during the start game status.
+
+    Examples
+    --------
+    >>> wait_message_window_action(0, player_table, screen, system_table, 0, player_ships, game_steps, systems_ships)
+    """
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -40,43 +118,89 @@ def wait_message_window_action(game_position, player_table, screen, system_table
 
 def do_action_on_window(game_position, screen, text2, player_game_steps):
     if player_game_steps[game_position][0] == var.STATUS_START or player_game_steps[game_position][0] == var.STATUS_END:
-        pygame.display.set_caption(var.TITLE_OF_GAME)
-        if player_game_steps[game_position][0] == var.STATUS_END:
-            image1 = pygame.image.load(var.END_IMG).convert_alpha()
-        else:
-            image1 = pygame.image.load(var.START_IMG).convert_alpha()
-        image1 = pygame.transform.scale(image1, (var.BOARD_WIDTH * 2, var.BOARD_HEIGHT))
-        screen.fill(var.WHITE)
-        screen.blit(image1, (0, 0))
+        draw_window_img(game_position, player_game_steps, screen)
     else:
-        font = pygame.font.Font(None, 36)
-        text = font.render(text2, True, (255, 0, 0))  # Texto de la alerta
-        text_rect = text.get_rect(center=(150, 100))
-        screen.blit(text, text_rect)
+        draw_window_text(screen, text2)
 
     pygame.display.flip()
 
 
+def draw_window_text(screen, text2):
+    font = pygame.font.Font(None, 36)
+    text = font.render(text2, True, (255, 0, 0))  # Texto de la alerta
+    text_rect = text.get_rect(center=(150, 100))
+    screen.blit(text, text_rect)
+
+
+def draw_window_img(game_position, player_game_steps, screen):
+    pygame.display.set_caption(var.TITLE_OF_GAME)
+    if player_game_steps[game_position][0] == var.STATUS_END:
+        image1 = pygame.image.load(var.END_IMG).convert_alpha()
+    else:
+        image1 = pygame.image.load(var.START_IMG).convert_alpha()
+    image1 = pygame.transform.scale(image1, (var.BOARD_WIDTH * 2, var.BOARD_HEIGHT))
+    screen.fill(var.WHITE)
+    screen.blit(image1, (0, 0))
+
+
 def draw_board(screen, player_table, system_table):
+    """
+    Draw the game board with player and system tables.
+
+    This function draws the game board on the provided screen surface,
+    including the player's table, player's grids, system's table, and system's grids.
+
+    Parameters
+    ----------
+    screen : pygame.Surface
+        The game window surface.
+    player_table : list
+        List representing the player's game table.
+    system_table : list
+        List representing the system's game table.
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> draw_board(screen, player_table, system_table)
+    """
     cell_size = var.BOARD_WIDTH // var.MAX_CELLS
     font = pygame.font.Font(None, 36)
-    for i in range(var.MAX_CELLS):
-        for j in range(var.MAX_CELLS):
-            text = font.render(player_table[i, j], True, var.BLACK)
-            text_rect = text.get_rect(center=(j * cell_size + cell_size // 2, i * cell_size + cell_size // 2))
-            screen.blit(text, text_rect)
 
-    # Draw grid lines for player's board
+    # Draw the player's table
+    draw_player_table(cell_size, font, player_table, screen)
+
+    # Draw the player's grids
+    draw_pllayer_grids(cell_size, screen)
+
+    # Draw the system's table
+    draw_system_table(cell_size, font, screen, system_table)
+
+    # Draw the system's grids
+    draw_system_table_grids(cell_size, screen)
+
+    pygame.display.flip()
+
+
+def draw_system_table_grids(cell_size, screen):
+    # Draw grid lines for system's board
     for i in range(var.MAX_CELLS + 1):
-        pygame.draw.line(screen, var.GRAY, (i * cell_size, 0), (i * cell_size, var.BOARD_HEIGHT))
-        pygame.draw.line(screen, var.GRAY, (0, i * cell_size), (var.BOARD_HEIGHT, i * cell_size))
+        pygame.draw.line(screen, var.GRAY, (i * cell_size + var.BOARD_WIDTH, 0),
+                         (i * cell_size + var.BOARD_WIDTH, var.BOARD_HEIGHT))
+        pygame.draw.line(screen, var.GRAY, (0, i * cell_size + var.BOARD_WIDTH),
+                         (var.BOARD_HEIGHT, i * cell_size + var.BOARD_WIDTH))
 
+
+def draw_system_table(cell_size, font, screen, system_table):
     # Display system's board contents
     for i in range(var.MAX_CELLS):
         for j in range(var.MAX_CELLS):
             if debugger_enable:
                 text = font.render(system_table[i, j], True, var.GREEN)
-            elif (system_table[i, j] == "0"):
+            elif system_table[i, j] == "0":
                 text = font.render(var.SYSTEM_WATER_SYMBOL, True, var.GREEN)
             else:
                 text = font.render(system_table[i, j], True, var.GREEN)
@@ -84,17 +208,24 @@ def draw_board(screen, player_table, system_table):
                                               i * cell_size + cell_size // 2))
             screen.blit(text, text_rect)
 
-    # Draw grid lines for system's board
+
+def draw_pllayer_grids(cell_size, screen):
+    # Draw grid lines for player's board
     for i in range(var.MAX_CELLS + 1):
-        pygame.draw.line(screen, var.GRAY, (i * cell_size + var.BOARD_WIDTH, 0),
-                         (i * cell_size + var.BOARD_WIDTH, var.BOARD_HEIGHT))
-        pygame.draw.line(screen, var.GRAY, (0, i * cell_size + var.BOARD_WIDTH),
-                         (var.BOARD_HEIGHT, i * cell_size + var.BOARD_WIDTH))
-    pygame.display.flip()
+        pygame.draw.line(screen, var.GRAY, (i * cell_size, 0), (i * cell_size, var.BOARD_HEIGHT))
+        pygame.draw.line(screen, var.GRAY, (0, i * cell_size), (var.BOARD_HEIGHT, i * cell_size))
+
+
+def draw_player_table(cell_size, font, player_table, screen):
+    for i in range(var.MAX_CELLS):
+        for j in range(var.MAX_CELLS):
+            text = font.render(player_table[i, j], True, var.BLACK)
+            text_rect = text.get_rect(center=(j * cell_size + cell_size // 2, i * cell_size + cell_size // 2))
+            screen.blit(text, text_rect)
 
 
 def check_position_on_table(pos, table, tuplo):
-    if table[pos] == var.SYSTEM_WATER_SYMBOL or table[pos] == var.PLAYER_WATER_SYMBOL:
+    if table[pos] == var.SYSTEM_WATER_SYMBOL or table[pos] == var.PLAYER_WATER_SYMBOL or table[pos] == var.PLAYER_SYSTEM_WATER or table[pos] == var.SYSTEM_PLAYER_WATER:
         table[pos] = tuplo[0]
     else:
         table[pos] = tuplo[1]
@@ -220,11 +351,10 @@ def is_adjacent_and_not_diagonal(position1, position2):
     adjacent_condition = (abs(int(x1) - int(x2)) <= 1 and abs(int(y1) - int(y2)) <= 1 and abs(int(x2) - int(x1)) <= 1
                           and abs(int(y2) - int(y1)) <= 1 and (int(x1) != int(x2) or int(y1) != int(y2)))
 
-
-
     # Return True if positions are adjacent but not diagonal
     # Return False otherwise
     return adjacent_condition and distance(position1, position2) >= 1
+
 
 def check_diagonal(position1, position2):
     x1, y1 = position1
@@ -233,6 +363,7 @@ def check_diagonal(position1, position2):
     # This indicates diagonal movement
     if abs(int(x1) - int(x2)) == abs(int(y1) - int(y2)):
         raise PositionException("Orientation is bad...")
+
 
 # Method to check if two positions are adjacent and have a minimum distance
 def is_adjacent_and_distance(position1, position2):
@@ -288,7 +419,8 @@ def place_player_ships(game_position, ship_position, player_table,
                 check_position_is_correct(player_ships, pos, positions, ship_position)
 
                 if len(player_ships[ship_position].positions) > 0:
-                    check_diagonal(pos, player_ships[ship_position].positions[len(player_ships[ship_position].positions)-1])
+                    check_diagonal(pos, player_ships[ship_position].positions[
+                        len(player_ships[ship_position].positions) - 1])
                 player_table[pos] = var.PLAYER_SHIP_SYMBOL
 
                 player_ships[ship_position].positions.append(pos)
