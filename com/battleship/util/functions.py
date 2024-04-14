@@ -9,10 +9,10 @@ import numpy as np
 
 import com.battleship.config.variables as var
 
-system_ships_steps = [["Place_Ship", 4, 1, 4], ["Place_Ship", 3, 2, 3], ["Place_Ship", 2, 3, 2],
-                      ["Place_Ship", 1, 4, 1]]
+system_ships_steps = ([["Place_Ship", 4, 1, 4], ["Place_Ship", 3, 2, 3], ["Place_Ship", 2, 3, 2],
+                       ["Place_Ship", 1, 4, 1]])
 
-debugger_enable = False
+debugger_enable = True
 
 
 def show_window(text2, screen, player_table, system_table, game_position, ship_position,
@@ -116,12 +116,11 @@ def wait_message_window_action(game_position, player_table, screen, system_table
                                          player_game_steps, systems_ships)
 
 
-def do_action_on_window(game_position, screen, text2, player_game_steps):
+def do_action_on_window(game_position, screen, text, player_game_steps):
     if player_game_steps[game_position][0] == var.STATUS_START or player_game_steps[game_position][0] == var.STATUS_END:
-        draw_window_img(game_position, player_game_steps, screen)
+        draw_window_img(game_position, player_game_steps, screen, text)
     else:
-        draw_window_text(screen, text2)
-
+        draw_window_text(screen, text)
     pygame.display.flip()
 
 
@@ -132,7 +131,38 @@ def draw_window_text(screen, text2):
     screen.blit(text, text_rect)
 
 
-def draw_window_img(game_position, player_game_steps, screen):
+def draw_window_img(game_position, player_game_steps, screen, text):
+    """
+    Draw the game window image.
+
+    Initialize the game window with the appropriate image based on the game state.
+    The game window is filled with white color, the image is displayed,
+    and the specified text is drawn on the screen.
+
+    Parameters
+    ----------
+    game_position : int
+        Current position in the game state.
+    player_game_steps : list
+        List representing the game steps for the player.
+    screen : pygame.Surface
+        The game window surface.
+    text : str
+        Text to display on the game window.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    This function updates the game window with the appropriate image based on the game state
+    and displays the specified text on the screen.
+
+    Examples
+    --------
+    >>> draw_window_img(game_position, player_game_steps, screen, "Example Text")
+    """
     pygame.display.set_caption(var.TITLE_OF_GAME)
     if player_game_steps[game_position][0] == var.STATUS_END:
         image1 = pygame.image.load(var.END_IMG).convert_alpha()
@@ -141,6 +171,12 @@ def draw_window_img(game_position, player_game_steps, screen):
     image1 = pygame.transform.scale(image1, (var.BOARD_WIDTH * 2, var.BOARD_HEIGHT))
     screen.fill(var.WHITE)
     screen.blit(image1, (0, 0))
+
+    # Draw text on the screen
+    font = pygame.font.Font(None, 62)
+    text_surface = font.render(text, True, (255, 255, 255))  # Red text color
+    text_rect = text_surface.get_rect(center=(screen.get_width() // 2, 500))
+    screen.blit(text_surface, text_rect)
 
 
 def draw_board(screen, player_table, system_table):
@@ -247,50 +283,94 @@ def show_game_window(player_table, system_table, screen, game_position, ship_pos
                 end_game()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    pos = (
+                    left_position = (
                         int(event.pos[1] // (var.BOARD_HEIGHT / var.MAX_CELLS)),
                         int(event.pos[0] // (var.BOARD_WIDTH / var.MAX_CELLS))
                     )
-                    pos2 = (
-                        int(event.pos[1] // (var.BOARD_HEIGHT / var.MAX_CELLS)),
-                        int(((event.pos[0] - var.BOARD_WIDTH) // (var.BOARD_WIDTH / var.MAX_CELLS))))
 
                     ##Step place Ship
                     if player_game_steps[game_position][0] == var.STEP_PLACE_SHIP:
                         game_position, ship_position = place_player_ships(game_position, ship_position, player_table,
-                                                                          pos, system_table, player_ships,
+                                                                          left_position, system_table, player_ships,
                                                                           player_game_steps)
 
                     ##Step place System Ships
                     if player_game_steps[game_position][0] == var.STEP_SYSTEM_SHIPS:
-
-                        do_system_ships(game_position, player_table, system_table, systems_ships)
-                        game_position = game_position + 1
-                        if player_game_steps[game_position][0] == var.STATUS_GAME:
-                            show_game_window(player_table, system_table, screen, game_position, ship_position,
-                                             player_ships, player_game_steps, systems_ships)
+                        game_position = do_system_ships(game_position, player_table, system_table, systems_ships)
 
                     ##Step play game
                     if player_game_steps[game_position][0] == var.STATUS_GAME:
-                        pos = pos2
-                        check_position_on_table(pos, system_table, (var.PLAYER_SYSTEM_WATER, var.PLAYER_SYSTEM_BOOM))
-                        if not (check_element(system_table, "0")):
-                            game_position = game_position + 1
-                            print("Has ganado")
-                            show_window("Has Ganado!", screen, player_table, system_table, game_position, ship_position,
-                                        player_ships, player_game_steps, systems_ships)
-                        else:
-                            check_position_on_table(generate_random_position(var.MAX_CELLS), player_table,
-                                                    (var.SYSTEM_PLAYER_WATER, var.SYSTEM_PLAYER_BOOM))
-                            if not (check_element(system_table, "0")):
-                                game_position = game_position + 1
-                                print("Ha ganado la máquina")
-                                show_window("Ha ganado la máquina!", screen, player_table, system_table,
-                                            game_position)
-                            else:
-                                show_game_window(player_table, system_table, screen, game_position, ship_position,
-                                                 player_ships, player_game_steps, systems_ships)
-                                pygame.display.flip()
+                        right_position = (
+                            int(event.pos[1] // (var.BOARD_HEIGHT / var.MAX_CELLS)),
+                            int(((event.pos[0] - var.BOARD_WIDTH) // (var.BOARD_WIDTH / var.MAX_CELLS))))
+                        game_position = play_game(game_position, player_game_steps, player_ships, player_table,
+                                                  right_position, screen, ship_position, system_table, systems_ships)
+
+
+def play_game(game_position, player_game_steps, player_ships, player_table, right_position, screen, ship_position,
+              system_table, systems_ships):
+    """
+    Play the battleship game.
+
+    This function orchestrates the gameplay logic of the battleship game.
+    It checks the position on the system table, updates the game state accordingly,
+    and displays the appropriate window based on the game outcome.
+
+    Parameters
+    ----------
+    game_position : int
+        Current position in the game state.
+    player_game_steps : list
+        List representing the game steps for the player.
+    player_ships : list
+        List of player's ships.
+    player_table : list
+        List representing the player's game table.
+    right_position : tuple
+        Coordinates of the position to check on the system table.
+    screen : pygame.Surface
+        The game window surface.
+    ship_position : int
+        Current ship position.
+    system_table : list
+        List representing the system's game table.
+    systems_ships : list, optional
+        List of system's ships. Default is None.
+
+    Returns
+    -------
+    int
+        Updated game position.
+
+    Notes
+    -----
+    This function manages the core gameplay logic, including checking positions,
+    updating game state, and displaying appropriate windows based on the game outcome.
+
+    Examples
+    --------
+    >>> play_game(game_position, player_game_steps, player_ships, player_table,
+                  right_position, screen, ship_position, system_table, systems_ships)
+    """
+    check_position_on_table(right_position, system_table, (var.PLAYER_SYSTEM_WATER, var.PLAYER_SYSTEM_BOOM))
+    if not (check_element(system_table, "0")):
+        game_position = game_position + 1
+        print("You win")
+        show_window("You Win!", screen, player_table, system_table, game_position, ship_position,
+                    player_ships, player_game_steps, systems_ships)
+    else:
+        check_position_on_table(generate_random_position(var.MAX_CELLS), player_table,
+                                (var.SYSTEM_PLAYER_WATER, var.SYSTEM_PLAYER_BOOM))
+        if not (check_element(system_table, "0")):
+            game_position = game_position + 1
+            print("The machine wins")
+            show_window("The machine wins!", screen, player_table, system_table,
+                        game_position)
+        else:
+            show_game_window(player_table, system_table, screen, game_position, ship_position,
+                             player_ships, player_game_steps, systems_ships)
+            pygame.display.flip()
+    return game_position
 
 
 def end_game():
@@ -485,6 +565,7 @@ def do_system_ships(game_position, player_table, system_table, systems_ships):
             systems_ships[cont].positions = positions
             cont += 1
             draw_window(game_position, player_table, system_table)
+    return game_position + 1
 
 
 def paint_ship_position(positions, system_table, tuple_sys):
