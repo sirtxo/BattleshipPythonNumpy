@@ -12,7 +12,7 @@ import com.battleship.config.variables as var
 system_ships_steps = ([["Place_Ship", 4, 1, 4], ["Place_Ship", 3, 2, 3], ["Place_Ship", 2, 3, 2],
                        ["Place_Ship", 1, 4, 1]])
 
-debugger_enable = True
+debugger_enable = False
 
 
 def show_window(text2, screen, player_table, system_table, game_position, ship_position,
@@ -268,8 +268,14 @@ def check_position_on_table(pos, table, tuplo):
         table[pos] = tuplo[1]
 
 
-def generate_random_position(board_size):
-    return random.randint(0, board_size - 1), random.randint(0, board_size - 1)
+def generate_random_position(board_size, player_table):
+    (x, y) = random.randint(0, board_size - 1), random.randint(0, board_size - 1)
+    if player_table[(x, y)] == var.SYSTEM_PLAYER_BOOM:
+        return generate_random_position(board_size, player_table)
+    elif player_table[(x, y)] == var.SYSTEM_PLAYER_WATER:
+        return generate_random_position(board_size, player_table)
+    else:
+        return x, y
 
 
 def show_game_window(player_table, system_table, screen, game_position, ship_position, player_ships, player_game_steps,
@@ -359,14 +365,17 @@ def play_game(game_position, player_game_steps, player_ships, player_table, righ
         show_window("You Win!", screen, player_table, system_table, game_position, ship_position,
                     player_ships, player_game_steps, systems_ships)
     else:
-        check_position_on_table(generate_random_position(var.MAX_CELLS), player_table,
+        check_position_on_table(generate_random_position(var.MAX_CELLS, player_table), player_table,
                                 (var.SYSTEM_PLAYER_WATER, var.SYSTEM_PLAYER_BOOM))
-        if not (check_element(system_table, "0")):
+        if not (check_element(player_table, "x")):
             game_position = game_position + 1
             print("The machine wins")
-            show_window("The machine wins!", screen, player_table, system_table,
-                        game_position)
+            show_window("The machine wins!",  screen, player_table, system_table, game_position, ship_position,
+                        player_ships, player_game_steps, systems_ships)
+            show_window("You Win!", screen, player_table, system_table, game_position, ship_position,
+                        player_ships, player_game_steps, systems_ships)
         else:
+
             show_game_window(player_table, system_table, screen, game_position, ship_position,
                              player_ships, player_game_steps, systems_ships)
             pygame.display.flip()
