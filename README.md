@@ -1,36 +1,59 @@
-# BattleshipPythonNumpy
+# Battleship Game
 
 ## Description
 
-This is a simple game implemented in Python using NumPy library. The game aims to
-"Battleship," also known as "Sink the Fleet," is a strategy game where two players compete to sink each other's ships. Each player has a grid where they strategically place their ships of varying sizes and orientations, without the opponent seeing their layout. Then, players take turns firing shots at the opponent's grid, trying to guess the location of the ships and sink them. The player who manages to sink all of the opponent's ships first wins the game. Battleship is a classic game that combines deductive skill with strategy and can be enjoyed by both children and adults.
+This Python project implements a Battleship game using the Pygame library. It allows players to place their ships on the board, engage in battles with the system, and win by either sinking all the opponent's ships or having all their ships sunk.
 
 ## Features
 
-- [Feature 1]: [Description of feature 1]
-- [Feature 2]: [Description of feature 2]
-- [Feature 3]: [Description of feature 3]
-- ...
+- Interactive gameplay with mouse clicks.
+- Multiple game steps including ship placement and battle.
+- Visual representation of the game board using Pygame.
+- Player and system ship placement logic.
+- Win detection for both player and system.
 
 ## Installation
 
-1. Clone the repository:
-2. Install the required dependencies using pip:
+1. Clone this repository to your local machine:
+
+    ```
+    git clone https://github.com/sirtxo/BattleshipPythonNumpy.git
+    ```
+
+2. Install the required dependencies:
+
+    ```
+    pip install -r requirements.txt
+    ```
 
 ## Usage
 
-1. Navigate to the project directory.
-2. Run the main script: game.py
+Run the main Python script to start the game:
 
+```
+python main.py
+```
 
-3. Follow the on-screen instructions to play the game.
+Follow the on-screen instructions to play the game. Use the mouse to interact with the game board.
 
-## Dependencies
+## How to Play
 
-- Python (>= 3.9.5)
-- NumPy (>= 1.23.0)
-- Pygame-2.5.2
+- Launch the game by running `main.py`.
+- Engage in battles with the system by clicking on opponent's positions.
+- Win the game by sinking all the opponent's ships or having all your ships sunk.
+
+## File Structure
+
+- `main.py`: Entry point of the application.
+- `ship.py`: Defines the Ship class.
+- `functions.py`: Contains utility functions used throughout the game.
+- `variables.py`: Defines constants used in the game.
+- `requirements.txt`: Lists the Python dependencies for the project.
 
 ## Contributing
 
-Contributions are welcome! Feel free to fork the repository and submit pull requests to propose changes or improvements.
+Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or create a pull request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

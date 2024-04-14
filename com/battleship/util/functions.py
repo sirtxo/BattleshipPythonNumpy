@@ -216,14 +216,23 @@ def is_adjacent_and_not_diagonal(position1, position2):
     x2, y2 = position2
 
     # Check if absolute difference between x and y coordinates is <= 1
-    adjacent_condition = abs(int(x1) - int(x2)) <= 1 and abs(int(y1) - int(y2)) <= 1
+    # and ensure positions are not the same
+    adjacent_condition = (abs(int(x1) - int(x2)) <= 1 and abs(int(y1) - int(y2)) <= 1 and abs(int(x2) - int(x1)) <= 1
+                          and abs(int(y2) - int(y1)) <= 1 and (int(x1) != int(x2) or int(y1) != int(y2)))
 
-    # Check if positions are adjacent and distance is >= 1
-    if adjacent_condition and distance(position1, position2) >= 1:
-        return True
-    else:
-        return False
 
+
+    # Return True if positions are adjacent but not diagonal
+    # Return False otherwise
+    return adjacent_condition and distance(position1, position2) >= 1
+
+def check_diagonal(position1, position2):
+    x1, y1 = position1
+    x2, y2 = position2
+    # Check if the difference between x and y coordinates is equal
+    # This indicates diagonal movement
+    if abs(int(x1) - int(x2)) == abs(int(y1) - int(y2)):
+        raise PositionException("Orientation is bad...")
 
 # Method to check if two positions are adjacent and have a minimum distance
 def is_adjacent_and_distance(position1, position2):
@@ -278,6 +287,8 @@ def place_player_ships(game_position, ship_position, player_table,
 
                 check_position_is_correct(player_ships, pos, positions, ship_position)
 
+                if len(player_ships[ship_position].positions) > 0:
+                    check_diagonal(pos, player_ships[ship_position].positions[len(player_ships[ship_position].positions)-1])
                 player_table[pos] = var.PLAYER_SHIP_SYMBOL
 
                 player_ships[ship_position].positions.append(pos)
@@ -328,7 +339,8 @@ def do_system_ships(game_position, player_table, system_table, systems_ships):
         for i in range(num_ships):
             num_positions = sublist[1]
             positions = []
-            tuple_sys_list, cont = generate_ship_positions(var.MAX_CELLS, num_positions, system_table, systems_ships, cont)
+            tuple_sys_list, cont = generate_ship_positions(var.MAX_CELLS, num_positions, system_table, systems_ships,
+                                                           cont)
             for tuple_sys in tuple_sys_list:
                 paint_ship_position(positions, system_table, tuple_sys)
 
