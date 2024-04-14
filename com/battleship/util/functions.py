@@ -12,7 +12,7 @@ import com.battleship.config.variables as var
 system_ships_steps = [["Place_Ship", 4, 1, 4], ["Place_Ship", 3, 2, 3], ["Place_Ship", 2, 3, 2],
                       ["Place_Ship", 1, 4, 1]]
 
-debugger_enable = True
+debugger_enable = False
 
 
 def show_window(text2, screen, player_table, system_table, game_position, ship_position,
