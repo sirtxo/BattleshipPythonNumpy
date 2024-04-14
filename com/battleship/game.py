@@ -6,7 +6,7 @@ from com.battleship.util.functions import show_window
 
 player_ships = [Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(),
                 Ship()]
-games_ships = [Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(),
+systems_ships = [Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(), Ship(),
                Ship()]
 player_game_steps = [["Start"],
                      ["Place_Ship", 4, 1, 4],

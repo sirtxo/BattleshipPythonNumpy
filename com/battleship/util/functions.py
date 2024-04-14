@@ -1,5 +1,4 @@
 import math
-import time
 from turtle import distance
 
 import pygame
@@ -170,7 +169,7 @@ def check_position(positions, pos):
     check_orientation(pos, positions)
     adjacent_found = False
     for position in positions:
-        if is_adjacent(position, pos):
+        if is_adjacent_and_not_diagonal(position, pos):
             adjacent_found = True
 
     if not adjacent_found:
@@ -182,7 +181,7 @@ def check_position(positions, pos):
 def checkAdjacent(pos, positions):
     adjacent_found = False
     for position in positions:
-        if is_adjacent(position, pos):
+        if is_adjacent_and_not_diagonal(position, pos):
             adjacent_found = True
     if adjacent_found:
         print("not is adjacent")
@@ -202,35 +201,47 @@ def check_all_adjacent_and_distance(all_positions, check_positions):
 def check_no_adjacent(pos, positions):
     adjacent_no_found = True
     for position in positions:
-        if is_adjacent(position, pos):
+        if is_adjacent_and_not_diagonal(position, pos):
             adjacent_no_found = False
     if adjacent_no_found:
         print("not is adjacent")
         raise PositionException("Orientation is bad...")
 
 
-# Función auxiliar para verificar si dos posiciones están adyacentes
+# Función auxiliar para verificar si dos posiciones están adyacentes y en diagonal
 # Method to check if two positions are adjacent on a 2D grid
-def is_adjacent(position1, position2):
+def is_adjacent_and_not_diagonal(position1, position2):
     # Extract x and y coordinates of both positions
     x1, y1 = position1
     x2, y2 = position2
 
     # Check if absolute difference between x and y coordinates is <= 1
-    # and ensure positions are not the same
-    return abs(x1 - x2) <= 1 and abs(y1 - y2) <= 1 and (x1 != x2 or y1 != y2)
+    adjacent_condition = abs(int(x1) - int(x2)) <= 1 and abs(int(y1) - int(y2)) <= 1
+
+    # Check if positions are adjacent and distance is >= 1
+    if adjacent_condition and distance(position1, position2) >= 1:
+        return True
+    else:
+        return False
 
 
 # Method to check if two positions are adjacent and have a minimum distance
 def is_adjacent_and_distance(position1, position2):
-    # Extract x and y coordinates of both positions
     x1, y1 = position1
     x2, y2 = position2
 
-    # Check if absolute difference between x and y coordinates is <= 1
-    # and if distance between positions is >= 1
-    return abs(x1 - x2) <= 1 and abs(y1 - y2) <= 1 and distance(position1, position2) >= 1 and abs(
-        x1 - x2) != 0 and abs(y1 - y2) != 0
+    if int(position1[0]) == int(position2[0]) and int(position1[1]) == int(position2[1]):
+        return True
+    else:
+
+        # Check if absolute difference between x and y coordinates is <= 1
+        adjacent_condition = abs(int(x1) - int(x2)) <= 1 and abs(int(y1) - int(y2)) <= 1
+
+        # Check if positions are adjacent and distance is >= 1
+        if adjacent_condition and distance(position1, position2) >= 1:
+            return True
+        else:
+            return False
 
 
 # Method to calculate Euclidean distance between two positions in a 2D grid
@@ -317,16 +328,25 @@ def do_system_ships(game_position, player_table, system_table, systems_ships):
         for i in range(num_ships):
             num_positions = sublist[1]
             positions = []
-            for tuple_sys in generate_ship_positions(var.MAX_CELLS, num_positions, system_table, systems_ships):
-                positions.append(tuple_sys)
-                system_table[tuple_sys] = "0"
-        systems_ships[cont].positions = positions
-        cont += cont + 1
-        draw_window(game_position, player_table, system_table)
+            tuple_sys_list, cont = generate_ship_positions(var.MAX_CELLS, num_positions, system_table, systems_ships, cont)
+            for tuple_sys in tuple_sys_list:
+                paint_ship_position(positions, system_table, tuple_sys)
+
+            systems_ships[cont].positions = positions
+            cont += 1
+            draw_window(game_position, player_table, system_table)
 
 
-def generate_ship_positions(board_size, ship_size, system_table, systems_ships):
+def paint_ship_position(positions, system_table, tuple_sys):
+    positions.append(tuple_sys)
+    system_table[tuple_sys] = "0"
+
+
+def generate_ship_positions(board_size, ship_size, system_table, systems_ships, cont):
     valid_position = False
+    if ship_size == 1:
+        print()
+
     while not valid_position:
         random_positions = create_random_position(board_size, ship_size)
 
@@ -335,7 +355,7 @@ def generate_ship_positions(board_size, ship_size, system_table, systems_ships):
         if check_all_adjacent_and_distance(system_positions, np.array(random_positions)):
             valid_position = False
         elif not (check_elements(random_positions, system_table)):
-            return random_positions
+            return random_positions, cont
         else:
             valid_position = False
 
