@@ -225,7 +225,8 @@ def draw_player_table(cell_size, font, player_table, screen):
 
 
 def check_position_on_table(pos, table, tuplo):
-    if table[pos] == var.SYSTEM_WATER_SYMBOL or table[pos] == var.PLAYER_WATER_SYMBOL or table[pos] == var.PLAYER_SYSTEM_WATER or table[pos] == var.SYSTEM_PLAYER_WATER:
+    if table[pos] == var.SYSTEM_WATER_SYMBOL or table[pos] == var.PLAYER_WATER_SYMBOL or table[
+        pos] == var.PLAYER_SYSTEM_WATER or table[pos] == var.SYSTEM_PLAYER_WATER:
         table[pos] = tuplo[0]
     else:
         table[pos] = tuplo[1]
@@ -250,6 +251,10 @@ def show_game_window(player_table, system_table, screen, game_position, ship_pos
                         int(event.pos[1] // (var.BOARD_HEIGHT / var.MAX_CELLS)),
                         int(event.pos[0] // (var.BOARD_WIDTH / var.MAX_CELLS))
                     )
+                    pos2 = (
+                        int(event.pos[1] // (var.BOARD_HEIGHT / var.MAX_CELLS)),
+                        int(((event.pos[0] - var.BOARD_WIDTH) // (var.BOARD_WIDTH / var.MAX_CELLS))))
+
                     ##Step place Ship
                     if player_game_steps[game_position][0] == var.STEP_PLACE_SHIP:
                         game_position, ship_position = place_player_ships(game_position, ship_position, player_table,
@@ -267,6 +272,7 @@ def show_game_window(player_table, system_table, screen, game_position, ship_pos
 
                     ##Step play game
                     if player_game_steps[game_position][0] == var.STATUS_GAME:
+                        pos = pos2
                         check_position_on_table(pos, system_table, (var.PLAYER_SYSTEM_WATER, var.PLAYER_SYSTEM_BOOM))
                         if not (check_element(system_table, "0")):
                             game_position = game_position + 1
